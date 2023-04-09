@@ -1,30 +1,31 @@
 import dearpygui.dearpygui as dpg
+from controller.controller import XmlToXlsxConverterController
+
 
 class XmlToXlsxConverterView:
+    def __init__(self):
+        self.controller = XmlToXlsxConverterController(self)
 
-    def __init__(self, controller):
-        self.controller = controller
+        with dpg.window("XML to XLSX Converter"):
+            dpg.add_text("Select XML File:")
+            self.xml_file_path = dpg.add_input_text("##XML_FILE_PATH", width=500)
 
-        with dpg.window("Convertidor XML a XLSX"):
-            dpg.add_text("Por favor, selecciona el archivo XML:")
-            self.xml_file_path = dpg.add_input_text("##Ruta archivo XML", width=500)
-
-            dpg.add_button("Buscar", callback=self.browse_xml_file)
+            dpg.add_button("Browse", callback=self.browse_xml_file)
 
             dpg.add_text("Tags:")
-            self.tags = dpg.add_input_text("##Tags", width=500)
+            self.tags = dpg.add_input_text("##TAGS", width=500)
 
-            dpg.add_button("Convertir", callback=self.convert_xml_to_xlsx)
+            dpg.add_button("Convert", callback=self.convert_xml_to_xlsx)
 
-            dpg.add_text("Ruta de guardado:")
-            self.xlsx_file_path = dpg.add_input_text("##Ruta archivo XLSX", width=500)
+            dpg.add_text("Output File:")
+            self.xlsx_file_path = dpg.add_input_text("##XLSX_FILE_PATH", width=500)
 
-            dpg.add_button("Guardar", callback=self.save_xlsx_file)
-    
+            dpg.add_button("Save", callback=self.save_xlsx_file)
+
     def browse_xml_file(self):
-        file_path = dpg.file_dialog("Selecciona archivo XML", extensions = [".xml"])
+        file_path = dpg.file_dialog(label="Select XML File", extensions=[".xml"])
         dpg.set_value(self.xml_file_path, file_path)
-    
+
     def convert_xml_to_xlsx(self):
         xml_file_path = dpg.get_value(self.xml_file_path)
         tags = dpg.get_value(self.tags).split(',')
@@ -36,5 +37,4 @@ class XmlToXlsxConverterView:
 
     def save_xlsx_file(self):
         xlsx_file_path = dpg.get_value(self.xlsx_file_path)
-        dpg.file_dialog_save_as("Guardar archivo xlsx", default_filename = xlsx_file_path, extensions = [".xlsx"])
-    
+        dpg.file_dialog(label="Save XLSX File", default_filename=xlsx_file_path, extensions=[".xlsx"])
