@@ -1,8 +1,11 @@
-import dearpygui.dearpygui as dpg
-from view.view import XmlToXlsxConverterView
+import sys
+from PyQt5 import QtWidgets
+from view.view import XmlToXlsxView
+from controller.controller import XmlToXlsxController
 
 
-if __name__ == '__main__':
-    with dpg.window():
-        view = XmlToXlsxConverterView()
-    dpg.start_dearpygui()
+app = QtWidgets.QApplication(sys.argv)
+view = XmlToXlsxView()
+controller = XmlToXlsxController(view)
+view.show()
+sys.exit(app.exec_())

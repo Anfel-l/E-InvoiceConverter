@@ -1,11 +1,10 @@
 from model.model import XmlToXlsxConverter
 
 
-class XmlToXlsxConverterController:
+class XmlToXlsxController:
     def __init__(self, view):
-        self.converter = XmlToXlsxConverter()
         self.view = view
 
-    def convert(self, xml_file_path, tags):
-        self.converter.set_tags(tags)
-        return self.converter.convert(xml_file_path)
+    def convert_xml_to_xlsx(self, xml_file_path, tags_list, output_path):
+        converter = XmlToXlsxConverter(xml_file_path, tags_list)
+        converter.convert(output_path)

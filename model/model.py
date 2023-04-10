@@ -1,29 +1,27 @@
 import pandas as pd
-from xml.etree import ElementTree as ET
-
+import xml.etree.ElementTree as ET
 
 class XmlToXlsxConverter:
-    def __init__(self):
-        self.tags = []
+    def __init__(self, xml_file_path, tags_list):
+        self.xml_file_path = xml_file_path
+        self.tags_list = tags_list
 
-    def set_tags(self, tags):
-        self.tags = tags
-
-    def convert(self, xml_file_path):
+    def _extract_data(self):
+        tree = ET.parse(self.xml_file_path)
+        root = tree.getroot()
         data = []
-        root = ET.parse(xml_file_path).getroot()
+        for child in root:
+            row = {}
+            for tag in self.tags_list:
+                element = child.find(tag)
+                if element is not None:
+                    row[tag] = element.text
+                else:
+                    row[tag] = ""
+            data.append(row)
+        return data
 
-        for item in root.findall('.//*'):
-            if item.tag in self.tags:
-                row = [item.tag]
-
-                for child in item:
-                    row.append(child.text)
-
-                data.append(row)
-
+    def convert(self, output_path):
+        data = self._extract_data()
         df = pd.DataFrame(data)
-        xlsx_file_path = xml_file_path.replace('.xml', '.xlsx')
-        df.to_excel(xlsx_file_path, index=False, header=False)
-
-        return xlsx_file_path
+        df.to_excel(output_path, index=False)
