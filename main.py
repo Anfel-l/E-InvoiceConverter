@@ -1,11 +1,13 @@
 import sys
 from PyQt5 import QtWidgets
-from view.view import XmlToXlsxView
-from controller.controller import XmlToXlsxController
+from model.pdf_model import PDFModel
+from view.pdf_view import PDFView
+from controller.pdf_controller import PDFController
 
-
-app = QtWidgets.QApplication(sys.argv)
-view = XmlToXlsxView()
-controller = XmlToXlsxController(view)
-view.show()
-sys.exit(app.exec_())
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    model = PDFModel()
+    view = PDFView()
+    controller = PDFController(model, view)
+    view.show()
+    sys.exit(app.exec_())
