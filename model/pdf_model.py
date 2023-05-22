@@ -6,6 +6,6 @@ class PDFModel:
             document = pdf.Document(pdf_file)
             excelSaveOptions = pdf.ExcelSaveOptions()
             document.save(excel_file, excelSaveOptions)
-            return True, "File created successfully"
+            return True, "Archivo Creado de Manera Exitosa"
         except Exception as e:
-            return False, f"Error creating file: {str(e)}"
+            return False, f"Error al crear el archivo: {str(e)}"
