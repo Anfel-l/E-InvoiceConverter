@@ -1,5 +1,8 @@
 #!/bin/bash
 
-# Instala las dependencias del proyecto
+# Dependencies installation and executable generation
+
 pip install -r requirements.txt
-# Fin del script
+pyinstaller --noconsole --onefile  --collect-all "aspose" main.py
+
+
