@@ -43,4 +43,4 @@ Contributions are welcome! If you have any suggestions, feature requests, or bug
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+Pending, shit is free
