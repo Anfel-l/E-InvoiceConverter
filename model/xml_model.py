@@ -2,6 +2,7 @@ import os
 import re
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
+from PyQt5.QtWidgets import QMessageBox
 
 class XMLModel:
     def convert_xml_to_excel(self, directory, excel_file):

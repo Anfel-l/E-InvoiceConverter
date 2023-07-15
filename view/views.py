@@ -292,12 +292,15 @@ class MainWindow(QMainWindow):
                 self.conversion_window.show()
 
     def set_directory(self, directory):
-        self.selected_directory = directory
-        if self.selected_directory:
-            destination, _ = QFileDialog.getSaveFileName(self, "Guardar archivo", "", "Archivos Excel (*.xlsx)")
-            if destination:
-                self.conversion_window = ConversionWindow(self.controller, self.selected_directory, destination)
-                self.conversion_window.show()
+            self.selected_directory = directory
+            if self.selected_directory:
+                destination, _ = QFileDialog.getSaveFileName(self, "Guardar archivo", "", "Archivos Excel (*.xlsx)")
+                if destination:
+                    success, message = self.controller.convert_xml_to_excel(self.selected_directory, destination)
+                    if success:
+                        QMessageBox.information(self, "Proceso completado", "La conversión se ha completado con éxito.")
+                    else:
+                        QMessageBox.critical(self, "Error", f"Error al convertir los archivos: {message}")
 
     def set_theme(self):
         if self.dark_mode:
