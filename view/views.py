@@ -2,9 +2,9 @@ import os
 import re
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QMessageBox, QAction, QDialog, QVBoxLayout, QHBoxLayout, QProgressBar
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QMessageBox, QAction, QDialog, QVBoxLayout, QHBoxLayout, QProgressBar
 
 class ConversionThread(QThread):
     progress_update = pyqtSignal(int)

@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFileDialog
-from PyQt5.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFileDialog
+from PyQt6.QtCore import pyqtSignal
 
 class ConversionWindow(QDialog):
     def __init__(self):
@@ -36,7 +36,6 @@ class DirectoryDialog(QDialog):
             border-radius: 5px;
             """
         )
-
         self.process_button = QPushButton("Procesar", self)
         self.process_button.setStyleSheet(
             """
