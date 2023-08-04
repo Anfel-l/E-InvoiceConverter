@@ -4,7 +4,7 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QMessageBox, QAction, QDialog, QVBoxLayout, QHBoxLayout, QProgressBar
+from PyQt6.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QMessageBox, QDialog, QVBoxLayout,QProgressBar
 
 class ConversionThread(QThread):
     progress_update = pyqtSignal(int)
@@ -76,12 +76,14 @@ class DirectoryDialog(QDialog):
         layout.addWidget(self.directory_label)
         layout.addWidget(self.directory_button)
         layout.addWidget(self.process_button)
-
+        
     def select_directory(self):
-        directory = QFileDialog.getExistingDirectory(self, "Seleccionar directorio", "", QFileDialog.ShowDirsOnly)
+        directory = QFileDialog.getExistingDirectory(self, "Seleccionar directorio")
         if directory:
             self.directory_label.setText(directory)
             self.process_button.setEnabled(True)
+
+        return directory
 
     def process_directory(self):
         directory = self.directory_label.text()
@@ -156,8 +158,8 @@ class ConversionWindow(QMainWindow):
     def __init__(self, controller, source, destination):
         super().__init__()
         self.setWindowTitle("Procesando...")
-        self.setFixedSize(400, 150)  # Establecer un tamaño fijo para la ventana
-        self.setWindowIcon(QIcon("icon.png"))  # Agregar un icono a la ventana
+        self.setFixedSize(400, 150)
+        self.setWindowIcon(QIcon("icon.png"))
 
         self.controller = controller
         self.source = source
@@ -181,14 +183,14 @@ class ConversionWindow(QMainWindow):
 
     def process_finished(self):
         QMessageBox.information(self, "Proceso completado", "La conversión se ha completado con éxito.")
-        self.close()
+        self.close()    
 
 class MainWindow(QMainWindow):
     def __init__(self, controller):
         super().__init__()
         self.setWindowTitle("Business Laboratory: Conversion App")
-        self.setFixedSize(400, 300)  # Establecer un tamaño fijo para la ventana
-        self.setWindowIcon(QIcon("icon.png"))  # Agregar un icono a la ventana
+        self.setFixedSize(400, 300)
+        self.setWindowIcon(QIcon("icon.png"))
 
         self.controller = controller
 
@@ -272,16 +274,16 @@ class MainWindow(QMainWindow):
             "El progreso de la conversión se mostrará en la barra de progreso.\n\n"
             "¡Disfrute utilizando Business Laboratory: Conversion App!"
         )
-        info_dialog.setIcon(QMessageBox.Information)
-        info_dialog.exec_()
+        info_dialog.setIcon(QMessageBox.Icon.Information)
+        info_dialog.exec()
 
     def convert_pdf(self):
         self.file_dialog = FileDialog(self)
-        self.file_dialog.exec_()
+        self.file_dialog.exec()
 
     def convert_xml(self):
         self.directory_dialog = DirectoryDialog(self)
-        self.directory_dialog.exec_()
+        self.directory_dialog.exec()
 
     def set_file(self, file):
         self.selected_file = file
@@ -343,11 +345,13 @@ class MainWindow(QMainWindow):
     def toggle_theme(self):
         self.dark_mode = not self.dark_mode
         self.set_theme()
-
+            
     def closeEvent(self, event):
-        reply = QMessageBox.question(self, "Cerrar", "¿Estás seguro de que quieres cerrar la aplicación?",
-                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
+        reply = QMessageBox.question(
+            self, "Cerrar", "¿Estás seguro de que quieres cerrar la aplicación?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No
+        )
+        if reply == QMessageBox.StandardButton.Yes:
             event.accept()
         else:
             event.ignore()
