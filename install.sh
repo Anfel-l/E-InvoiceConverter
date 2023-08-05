@@ -2,21 +2,41 @@
 
 # Nombre del archivo de script: install.sh
 
-# Verificar si PyInstaller está instalado
-if ! command -v pyinstaller &> /dev/null; then
-    echo "PyInstaller no está instalado. Instalando PyInstaller..."
-    pip install pyinstaller
+# Verificar si cx_Freeze está instalado
+if ! command -v cxfreeze &> /dev/null; then
+    echo "cx_Freeze no está instalado. Instalando cx_Freeze..."
+    pip install cx-Freeze
 fi
 
 # Instalar los paquetes requeridos
 pip install pandas PyQt6 openpyxl aspose.pdf
 
-# Ejecutar el comando de instalación de PyInstaller
-pyinstaller --name="Business Laboratory Conversion App" --hiddenimport=aspose.pydrawing --noconsole --hiddenimport=aspose.pygc --collect-binaries=aspose main.py
+# Crear un archivo de configuración para cx_Freeze
+cat <<EOF > setup.py
+from cx_Freeze import setup, Executable
 
-# Verificar si el comando de instalación fue exitoso
+# Agregar aquí tus dependencias y otros detalles necesarios para el empaquetado
+# por ejemplo, includes, excludes, packages, etc.
+
+base = None
+
+executables = [Executable("main.py", base=base)]
+
+setup(
+    name="Business Laboratory Conversion App",
+    version="1.0",
+    description="Descripción de tu aplicación",
+    options={"build_exe": {"packages": ["os"], "excludes": []}},
+    executables=executables
+)
+EOF
+
+# Ejecutar el comando de empaquetado de cx_Freeze
+cxfreeze --target-dir dist main.py
+
+# Verificar si el comando de empaquetado fue exitoso
 if [ $? -eq 0 ]; then
-    echo "La instalación se completó exitosamente."
+    echo "El empaquetado se completó exitosamente."
 else
-    echo "Ocurrió un error durante la instalación."
+    echo "Ocurrió un error durante el empaquetado."
 fi
