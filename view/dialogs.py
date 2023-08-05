@@ -17,13 +17,24 @@ class ConversionWindow(QDialog):
         self.progress_bar.setValue(value)
 
 class DirectoryDialog(QDialog):
-    directory_selected = pyqtSignal(str)
-
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Seleccionar directorio")
+        self.setFixedSize(400, 250)
+        self.setWindowIcon(QIcon("icon.png"))
 
         self.label = QLabel("Seleccione el directorio:", self)
         self.label.setStyleSheet("font-size: 14px; color: #000000;")
+
+        self.directory_label = QLabel("", self)
+        self.directory_label.setStyleSheet(
+            """
+            background-color: #ffffff;
+            border: 1px solid #c0c0c0;
+            padding: 5px;
+            color: #000000;
+            """
+        )
 
         self.directory_button = QPushButton("Seleccionar directorio", self)
         self.directory_button.setStyleSheet(
@@ -36,6 +47,8 @@ class DirectoryDialog(QDialog):
             border-radius: 5px;
             """
         )
+        self.directory_button.clicked.connect(self.select_directory)
+
         self.process_button = QPushButton("Procesar", self)
         self.process_button.setStyleSheet(
             """
@@ -47,25 +60,26 @@ class DirectoryDialog(QDialog):
             border-radius: 5px;
             """
         )
-        self.process_button.setEnabled(False)
-
-        self.directory_button.clicked.connect(self.select_directory)
         self.process_button.clicked.connect(self.process_directory)
+        self.process_button.setEnabled(False)
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.label)
+        layout.addWidget(self.directory_label)
         layout.addWidget(self.directory_button)
         layout.addWidget(self.process_button)
 
     def select_directory(self):
-        directory = QFileDialog.getExistingDirectory(None, "Seleccionar directorio", "", QFileDialog.ShowDirsOnly)
-        if directory:
-            self.directory_selected.emit(directory)
+        options = QFileDialog.Options()
+        options |= QFileDialog.ReadOnly
+        options |= QFileDialog.DontUseNativeDialog
 
-    def process_directory(self):
-        directory = self.directory_label.text()
-        self.directory_selected.emit(directory)
-        self.close()
+        directory = QFileDialog.getExistingDirectory(self, "Seleccionar directorio", options=options)
+        if directory:
+            self.directory_label.setText(directory)
+            self.process_button.setEnabled(True)
+
+        return directory
 
 class FileDialog(QDialog):
     file_selected = pyqtSignal(str)
@@ -115,6 +129,5 @@ class FileDialog(QDialog):
             self.file_selected.emit(file)
 
     def process_file(self):
-        file = self.file_label.text()
-        self.file_selected.emit(file)
+        self.file_selected.emit(self.file)
         self.close()

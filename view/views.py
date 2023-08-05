@@ -1,10 +1,15 @@
+from model.xml_model import XMLModel
+from PyQt6.QtWidgets import QMessageBox
 import os
 import re
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QMessageBox, QDialog, QVBoxLayout,QProgressBar
+from PyQt6.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QDialog, QVBoxLayout, QProgressBar
+
+# Importamos la clase PDFModel en lugar de XMLModel
+from model.pdf_model import PDFModel
 
 class ConversionThread(QThread):
     progress_update = pyqtSignal(int)
@@ -17,7 +22,7 @@ class ConversionThread(QThread):
         self.destination = destination
 
     def run(self):
-        success, message = self.controller.convert_pdf_to_excel(self.source, self.destination)
+        success, message = self.controller.convert_pdfs_to_excel(self.source, self.destination)
         if success:
             self.finished.emit()
         else:
@@ -28,8 +33,8 @@ class DirectoryDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Seleccionar directorio")
-        self.setFixedSize(400, 250)  # Establecer un tamaño fijo para la ventana
-        self.setWindowIcon(QIcon("icon.png"))  # Agregar un icono a la ventana
+        self.setFixedSize(400, 250)
+        self.setWindowIcon(QIcon("icon.png"))
 
         self.label = QLabel("Seleccione el directorio:", self)
         self.label.setStyleSheet("font-size: 14px; color: #000000;")
@@ -76,8 +81,9 @@ class DirectoryDialog(QDialog):
         layout.addWidget(self.directory_label)
         layout.addWidget(self.directory_button)
         layout.addWidget(self.process_button)
-        
+
     def select_directory(self):
+        # Limitamos la selección a archivos PDF
         directory = QFileDialog.getExistingDirectory(self, "Seleccionar directorio")
         if directory:
             self.directory_label.setText(directory)
@@ -144,9 +150,9 @@ class FileDialog(QDialog):
         layout.addWidget(self.process_button)
 
     def select_file(self):
-        file, _ = QFileDialog.getOpenFileName(self, "Seleccionar archivo", "", "Archivos PDF (*.pdf)")
-        if file:
-            self.file_label.setText(file)
+        directory = QFileDialog.getExistingDirectory(self, "Seleccionar directorio")
+        if directory:
+            self.file_label.setText(directory)
             self.process_button.setEnabled(True)
 
     def process_file(self):
@@ -278,8 +284,8 @@ class MainWindow(QMainWindow):
         info_dialog.exec()
 
     def convert_pdf(self):
-        self.file_dialog = FileDialog(self)
-        self.file_dialog.exec()
+        self.directory_dialog = DirectoryDialog(self)  # Cambiamos el nombre del diálogo
+        self.directory_dialog.exec()
 
     def convert_xml(self):
         self.directory_dialog = DirectoryDialog(self)
@@ -290,15 +296,30 @@ class MainWindow(QMainWindow):
         if self.selected_file:
             destination, _ = QFileDialog.getSaveFileName(self, "Guardar archivo", "", "Archivos Excel (*.xlsx)")
             if destination:
-                self.conversion_window = ConversionWindow(self.controller, self.selected_file, destination)
-                self.conversion_window.show()
+                pdf_model = PDFModel()  # Creamos una instancia del modelo PDF
+                success, message = pdf_model.convert_pdf_to_excel(self.selected_file, destination)
+                if success:
+                    QMessageBox.information(self, "Proceso completado", "La conversión se ha completado con éxito.")
+                else:
+                    QMessageBox.critical(self, "Error", f"Error al convertir el archivo: {message}")
 
     def set_directory(self, directory):
-            self.selected_directory = directory
-            if self.selected_directory:
+        self.selected_directory = directory
+        if self.selected_directory:
+            if any(file.lower().endswith(".pdf") for file in os.listdir(self.selected_directory)):
                 destination, _ = QFileDialog.getSaveFileName(self, "Guardar archivo", "", "Archivos Excel (*.xlsx)")
                 if destination:
-                    success, message = self.controller.convert_xml_to_excel(self.selected_directory, destination)
+                    pdf_model = PDFModel()  # Creamos una instancia del modelo PDF
+                    success, message = pdf_model.convert_pdfs_to_excel(self.selected_directory, destination)
+                    if success:
+                        QMessageBox.information(self, "Proceso completado", "La conversión se ha completado con éxito.")
+                    else:
+                        QMessageBox.critical(self, "Error", f"Error al convertir los archivos: {message}")
+            else:
+                destination, _ = QFileDialog.getSaveFileName(self, "Guardar archivo", "", "Archivos Excel (*.xlsx)")
+                if destination:
+                    xml_model = XMLModel()  # Creamos una instancia del modelo XML
+                    success, message = xml_model.convert_xml_to_excel(self.selected_directory, destination)
                     if success:
                         QMessageBox.information(self, "Proceso completado", "La conversión se ha completado con éxito.")
                     else:
