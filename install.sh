@@ -8,6 +8,9 @@ if ! command -v pyinstaller &> /dev/null; then
     pip install pyinstaller
 fi
 
+# Instalar los paquetes requeridos
+pip install pandas PyQt6 openpyxl aspose.pdf
+
 # Ejecutar el comando de instalación de PyInstaller
 pyinstaller --name="Business Laboratory Conversion App" --hiddenimport=aspose.pydrawing --noconsole --hiddenimport=aspose.pygc --collect-binaries=aspose main.py
 
