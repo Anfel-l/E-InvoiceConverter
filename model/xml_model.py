@@ -1,94 +1,103 @@
 import os
 import re
-from openpyxl import Workbook
-from openpyxl.utils import get_column_letter
-
+import pandas as pd
 
 class XMLModel:
+    def find_invoice_number(self, xml):
+        parent_doc_id_start = xml.find("<cbc:ParentDocumentID>")
+        if parent_doc_id_start != -1:
+            parent_doc_id_end = xml.find("</cbc:ParentDocumentID>", parent_doc_id_start)
+            return xml[parent_doc_id_start+len("<cbc:ParentDocumentID>"):parent_doc_id_end].strip()
+
+        prefix_start = xml.find("<sts:AuthorizedInvoices>")
+        if prefix_start != -1:
+            prefix_end = xml.find("</sts:AuthorizedInvoices>", prefix_start)
+            prefix_section = xml[prefix_start:prefix_end]
+            prefix_start = prefix_section.find("<sts:Prefix>")
+            prefix_end = prefix_section.find("</sts:Prefix>", prefix_start)
+            prefix = prefix_section[prefix_start+len("<sts:Prefix>"):prefix_end].strip()
+            match = re.search(f"{prefix}[0-9]+", xml)
+            if match:
+                return match.group()
+
+        return "No encontrado"
+
+    def find_invoice_date(self, xml):
+        date_start = xml.find("<xades:SigningTime>")
+        if date_start != -1:
+            date_end = xml.find("</xades:SigningTime>", date_start)
+            return xml[date_start+len("<xades:SigningTime>"):date_end].strip()
+        return "No encontrado"
+
+    def find_client_info(self, xml):
+        client_info_start = xml.find("<cac:PartyLegalEntity>")
+        if client_info_start != -1:
+            client_info_end = xml.find("</cac:PartyLegalEntity>", client_info_start)
+            client_info_section = xml[client_info_start:client_info_end]
+            name_start = client_info_section.find("<cbc:RegistrationName>")
+            name_end = client_info_section.find("</cbc:RegistrationName>", name_start)
+            nit_start = client_info_section.find("<cbc:CompanyID ")
+            nit_end = client_info_section.find("</cbc:CompanyID>", nit_start)
+            name = client_info_section[name_start+len("<cbc:RegistrationName>"):name_end].strip()
+            nit = client_info_section[nit_start+len("<cbc:CompanyID "):nit_end].split('>')[1].strip()
+            return name, nit
+        return "No encontrado", "No encontrado"
+
+    def find_total_and_iva(self, xml):
+        iva_start = xml.find("<cac:TaxTotal>")
+        if iva_start != -1:
+            iva_end = xml.find("</cac:TaxTotal>", iva_start)
+            iva_section = xml[iva_start:iva_end]
+            iva_amount_start = iva_section.find("<cbc:TaxAmount ")
+            iva_amount_end = iva_section.find("</cbc:TaxAmount>", iva_amount_start)
+            iva_amount = iva_section[iva_amount_start+len("<cbc:TaxAmount "):iva_amount_end].split('>')[1].strip()
+
+        total_start = xml.find("<cac:LegalMonetaryTotal>")
+        if total_start != -1:
+            total_end = xml.find("</cac:LegalMonetaryTotal>", total_start)
+            total_section = xml[total_start:total_end]
+            total_amount_start = total_section.find("<cbc:PayableAmount ")
+            total_amount_end = total_section.find("</cbc:PayableAmount>", total_amount_start)
+            total_amount = total_section[total_amount_start+len("<cbc:PayableAmount "):total_amount_end].split('>')[1].strip()
+
+        return iva_amount if 'iva_amount' in locals() else "0", total_amount if 'total_amount' in locals() else "No encontrado"
+
+
+    def process_xml_files(self, directory):
+        results = []
+
+        for root, dirs, files in os.walk(directory):
+            for filename in files:
+                if filename.endswith('.xml'):
+                    file_path = os.path.join(root, filename)
+                    with open(file_path, 'r', encoding='utf-8') as file:
+                        xml_content = file.read()
+
+                    invoice_number = self.find_invoice_number(xml_content)
+                    invoice_date = self.find_invoice_date(xml_content)
+                    client_name, client_nit = self.find_client_info(xml_content)
+                    iva, total = self.find_total_and_iva(xml_content)
+
+                    if any(x == "No encontrado" for x in [invoice_number, invoice_date, client_name, client_nit, iva, total]):
+                        error_info = f"Error en archivo: {filename}"
+                    else:
+                        error_info = "OK"
+
+                    results.append({
+                        "File Name": filename,
+                        "Invoice Number": invoice_number,
+                        "Invoice Date": invoice_date,
+                        "Client Name": client_name,
+                        "Client NIT": client_nit,
+                        "IVA": iva,
+                        "Total": total,
+                        "Status": error_info
+                    })
+
+        df = pd.DataFrame(results)
+        return df
+
     def convert_xml_to_excel(self, directory, excel_file):
-        workbook = Workbook()
-        sheet = workbook.active
-
-        columnas = {
-            "NumFac": "B",
-            "NroFactura": "B",
-            "NitFac": "C",
-            "NitFacturador": "C",
-            "FecFac": "D",
-            "FechaFactura": "D",
-            "HorFac": "E",
-            "HoraFactura": "E",
-            "ValFac": "F",
-            "ValorFactura": "F",
-            "ValIva": "G",
-            "ValorIVA": "G",
-            "ValOtroIm": "H",
-            "ValorOtrosImpuestos": "H",
-            "ValTolFac": "I",
-            "ValorTotalFactura": "I",
-            "NitAdquiriente": "J/K",
-            "DocAdq": "J/K"
-        }
-
-        nombres_columnas = [
-            "NumFac/NroFactura", "NitFac/NitFacturador", "FecFac/FechaFactura",
-            "HorFac/HoraFactura", "ValFac/ValorFactura", "ValIva/ValorIVA",
-            "ValOtroIm/ValorOtrosImpuestos", "ValTolFac/ValorTotalFactura",
-            "NitAdquiriente/DocAdq"
-        ]
-
-        for i, nombre_columna in enumerate(nombres_columnas, start=1):
-            sheet.cell(row=1, column=i, value=nombre_columna).font = sheet.cell(row=1, column=i).font.copy(bold=True)
-
-        archivos_xml = [archivo for archivo in os.listdir(directory) if archivo.endswith(".xml")]
-        archivos_omitidos = []
-
-        for archivo_xml in archivos_xml:
-            valores_archivo = []
-
-            with open(os.path.join(directory, archivo_xml), "r", encoding="utf-8") as file:
-                contenido = file.read()
-
-            etiqueta = re.search(r"<sts:QRCode>(.*?)</sts:QRCode>", contenido)
-
-            if etiqueta:
-                contenido_etiqueta = etiqueta.group(1)
-                etiquetas = re.findall(r'(\w+)=(\S+)', contenido_etiqueta)
-                etiquetas = [(clave, valor) for clave, valor in etiquetas if "CUFE" not in valor and "QRCode" not in valor]
-
-                nit_adquiriente = next((valor for clave, valor in etiquetas if clave in ["NitAdquiriente", "DocAdq"]), "")
-                doc_adq = next((valor for clave, valor in etiquetas if clave in ["NitAdquiriente", "DocAdq"]), "")
-
-                for columna in columnas.values():
-                    valor = next((valor for clave, valor in etiquetas if columnas.get(clave) == columna), "")
-
-                    if valor not in valores_archivo:
-                        valores_archivo.append(valor)
-
-            if any(valores_archivo):
-                sheet.append(valores_archivo)
-            else:
-                archivos_omitidos.append(archivo_xml)
-
-        for columna in sheet.columns:
-            max_length = 0
-            column_letter = get_column_letter(columna[0].column)
-            for celda in columna:
-                if celda.value:
-                    try:
-                        if len(str(celda.value)) > max_length:
-                            max_length = len(str(celda.value))
-                    except:
-                        pass
-            adjusted_width = (max_length + 2) * 1.2  # Aumentar el ancho ajustado en un factor de 1.2
-            sheet.column_dimensions[column_letter].width = adjusted_width
-
-        # Agregar los nombres de los archivos omitidos en una columna al final, dos columnas después de la última con información
-        columna_omitidos = get_column_letter(13)  # Columna M
-        sheet.column_dimensions[columna_omitidos].width = 20  # Ajustar el ancho de la columna
-        sheet.cell(row=1, column=13, value="Archivos no convertidos").font = sheet.cell(row=1, column=13).font.copy(bold=True)
-        for i, archivo_omitido in enumerate(archivos_omitidos, start=2):
-            sheet.cell(row=i, column=13, value=archivo_omitido)
-
-        workbook.save(excel_file)
-        return True, "Archivos XML convertidos a Excel"
+        df = self.process_xml_files(directory)
+        df.to_excel(excel_file, index=False)
+        return True, f"DataFrame guardado en {excel_file}"

@@ -1,33 +1,23 @@
-from model.xml_model import XMLModel
-from PyQt6.QtWidgets import QMessageBox
-import os
-import re
-from openpyxl import Workbook
-from openpyxl.utils import get_column_letter
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QPushButton, QFileDialog, QMessageBox, QMainWindow, QProgressBar)
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QDialog, QVBoxLayout, QProgressBar
+from model.xml_model import XMLModel
 
-# Importamos la clase PDFModel en lugar de XMLModel
-from model.pdf_model import PDFModel
 
-class ConversionThread(QThread):
-    progress_update = pyqtSignal(int)
-    finished = pyqtSignal()
-
-    def __init__(self, controller, source, destination):
+class ConversionWindow(QDialog):
+    def __init__(self):
         super().__init__()
-        self.controller = controller
-        self.source = source
-        self.destination = destination
 
-    def run(self):
-        success, message = self.controller.convert_pdfs_to_excel(self.source, self.destination)
-        if success:
-            self.finished.emit()
-        else:
-            self.progress_update.emit(-1)  # Emitir un valor negativo para indicar un error
-            self.finished.emit()
+        self.progress_label = QLabel(self)
+        self.progress_label.setText("Procesando...")
+        self.progress_label.setGeometry(20, 20, 360, 30)
+        self.progress_label.setStyleSheet("font-size: 16px; color: #000000;")
+
+        self.progress_bar = QProgressBar(self)
+        self.progress_bar.setGeometry(20, 50, 360, 30)
+
+    def update_progress(self, value):
+        self.progress_bar.setValue(value)
 
 class DirectoryDialog(QDialog):
     def __init__(self, parent=None):
@@ -83,119 +73,25 @@ class DirectoryDialog(QDialog):
         layout.addWidget(self.process_button)
 
     def select_directory(self):
-        # Limitamos la selección a archivos PDF
-        directory = QFileDialog.getExistingDirectory(self, "Seleccionar directorio")
+        options = QFileDialog.Option.ReadOnly | QFileDialog.Option.DontUseNativeDialog
+        directory = QFileDialog.getExistingDirectory(self, "Seleccionar directorio", "", options=options)
         if directory:
             self.directory_label.setText(directory)
             self.process_button.setEnabled(True)
 
         return directory
-
+    
     def process_directory(self):
         directory = self.directory_label.text()
-        self.parent().set_directory(directory)
-        self.close()
-
-class FileDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Seleccionar archivo")
-        self.setFixedSize(400, 250)  # Establecer un tamaño fijo para la ventana
-        self.setWindowIcon(QIcon("icon.png"))  # Agregar un icono a la ventana
-
-        self.label = QLabel("Seleccione el archivo:", self)
-        self.label.setStyleSheet("font-size: 14px; color: #000000;")
-
-        self.file_label = QLabel("", self)
-        self.file_label.setStyleSheet(
-            """
-            background-color: #ffffff;
-            border: 1px solid #c0c0c0;
-            padding: 5px;
-            color: #000000;
-            """
-        )
-
-        self.file_button = QPushButton("Seleccionar archivo", self)
-        self.file_button.setStyleSheet(
-            """
-            font-size: 14px;
-            height: 40px;
-            background-color: #4b8da0;
-            color: #ffffff;
-            border: none;
-            border-radius: 5px;
-            """
-        )
-        self.file_button.clicked.connect(self.select_file)
-
-        self.process_button = QPushButton("Procesar", self)
-        self.process_button.setStyleSheet(
-            """
-            font-size: 14px;
-            height: 40px;
-            background-color: #4b8da0;
-            color: #ffffff;
-            border: none;
-            border-radius: 5px;
-            """
-        )
-        self.process_button.clicked.connect(self.process_file)
-        self.process_button.setEnabled(False)
-
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.label)
-        layout.addWidget(self.file_label)
-        layout.addWidget(self.file_button)
-        layout.addWidget(self.process_button)
-
-    def select_file(self):
-        directory = QFileDialog.getExistingDirectory(self, "Seleccionar directorio")
         if directory:
-            self.file_label.setText(directory)
-            self.process_button.setEnabled(True)
-
-    def process_file(self):
-        file = self.file_label.text()
-        self.parent().set_file(file)
+            self.parent().process_xml_directory(directory)
         self.close()
-
-class ConversionWindow(QMainWindow):
-    def __init__(self, controller, source, destination):
-        super().__init__()
-        self.setWindowTitle("Procesando...")
-        self.setFixedSize(400, 150)
-        self.setWindowIcon(QIcon("icon.png"))
-
-        self.controller = controller
-        self.source = source
-        self.destination = destination
-
-        self.progress_bar = QProgressBar(self)
-        self.progress_bar.setGeometry(20, 50, 360, 30)
-        self.progress_bar.setValue(0)
-
-        self.thread = ConversionThread(self.controller, self.source, self.destination)
-        self.thread.progress_update.connect(self.update_progress)
-        self.thread.finished.connect(self.process_finished)
-
-        self.thread.start()
-
-    def update_progress(self, value):
-        if value >= 0:
-            self.progress_bar.setValue(value)
-        else:
-            self.progress_bar.reset()
-
-    def process_finished(self):
-        QMessageBox.information(self, "Proceso completado", "La conversión se ha completado con éxito.")
-        self.close()    
 
 class MainWindow(QMainWindow):
     def __init__(self, controller):
         super().__init__()
         self.setWindowTitle("Business Laboratory: Conversion App")
-        self.setFixedSize(400, 300)
+        self.setFixedSize(400, 210)
         self.setWindowIcon(QIcon("icon.png"))
 
         self.controller = controller
@@ -205,125 +101,67 @@ class MainWindow(QMainWindow):
         self.label.setText("Seleccione la acción que desea realizar:")
         self.label.setStyleSheet("font-size: 16px; color: #000000;")
 
-        self.pdf_button = QPushButton(self)
-        self.pdf_button.setGeometry(20, 70, 360, 50)
-        self.pdf_button.setText("Convertir PDF a Excel")
-        self.pdf_button.setStyleSheet(
-            """
-            font-size: 16px;
-            height: 50px;
-            background-color: #4b8da0;
-            color: #ffffff;
-            border: none;
-            border-radius: 5px;
-            """
-        )
-        self.pdf_button.clicked.connect(self.convert_pdf)
-
         self.xml_button = QPushButton(self)
-        self.xml_button.setGeometry(20, 140, 360, 50)
+        self.xml_button.setGeometry(20, 70, 360, 50)
         self.xml_button.setText("Convertir XML a Excel")
-        self.xml_button.setStyleSheet(
-            """
+        self.xml_button.setStyleSheet("""
             font-size: 16px;
             height: 50px;
             background-color: #4b8da0;
             color: #ffffff;
             border: none;
             border-radius: 5px;
-            """
-        )
+            """)
         self.xml_button.clicked.connect(self.convert_xml)
 
         self.info_button = QPushButton(self)
-        self.info_button.setGeometry(20, 210, 160, 40)
+        self.info_button.setGeometry(20, 140, 160, 40)
         self.info_button.setText("Información")
-        self.info_button.setStyleSheet(
-            """
+        self.info_button.setStyleSheet("""
             font-size: 14px;
             height: 40px;
             background-color: #4b8da0;
             color: #ffffff;
             border: none;
             border-radius: 5px;
-            """
-        )
+            """)
         self.info_button.clicked.connect(self.show_info)
 
         self.exit_button = QPushButton(self)
-        self.exit_button.setGeometry(220, 210, 160, 40)
+        self.exit_button.setGeometry(220, 140, 160, 40)
         self.exit_button.setText("Salir")
-        self.exit_button.setStyleSheet(
-            """
+        self.exit_button.setStyleSheet("""
             font-size: 14px;
             height: 40px;
             background-color: #4b8da0;
             color: #ffffff;
             border: none;
             border-radius: 5px;
-            """
-        )
+            """)
         self.exit_button.clicked.connect(self.close)
 
-        self.dark_mode = False
-        self.set_theme()
-
     def show_info(self):
-        info_dialog = QMessageBox()
-        info_dialog.setWindowTitle("Información")
-        info_dialog.setText(
-            "Bienvenido a Business Laboratory: Conversion App\n\n"
-            "Esta aplicación le permite convertir archivos PDF y XML a formato Excel.\n\n"
-            "Para convertir un archivo PDF, haga clic en 'Convertir PDF a Excel' y seleccione el archivo PDF.\n\n"
-            "Para convertir un directorio de archivos XML, haga clic en 'Convertir XML a Excel' y seleccione el directorio.\n\n"
-            "Una vez seleccionado el archivo o directorio, haga clic en 'Procesar' para iniciar la conversión.\n\n"
-            "El progreso de la conversión se mostrará en la barra de progreso.\n\n"
-            "¡Disfrute utilizando Business Laboratory: Conversion App!"
-        )
-        info_dialog.setIcon(QMessageBox.Icon.Information)
-        info_dialog.exec()
-
-    def convert_pdf(self):
-        self.directory_dialog = DirectoryDialog(self)  # Cambiamos el nombre del diálogo
-        self.directory_dialog.exec()
+        QMessageBox.information(self, "Información",
+                                "Bienvenido a Business Laboratory: Conversion App\n\n"
+                                "Esta aplicación le permite convertir archivos XML a formato Excel.\n\n"
+                                "Para convertir un directorio de archivos XML, haga clic en 'Convertir XML a Excel' y seleccione el directorio.\n\n"
+                                "Una vez seleccionado el directorio, haga clic en 'Procesar' para iniciar la conversión.\n\n"
+                                "Para mayor información contacte con: anfellr11@gmail.com",
+                                QMessageBox.StandardButton.Ok) 
 
     def convert_xml(self):
         self.directory_dialog = DirectoryDialog(self)
         self.directory_dialog.exec()
 
-    def set_file(self, file):
-        self.selected_file = file
-        if self.selected_file:
+    def process_xml_directory(self, directory):
+        if directory:
             destination, _ = QFileDialog.getSaveFileName(self, "Guardar archivo", "", "Archivos Excel (*.xlsx)")
             if destination:
-                pdf_model = PDFModel()  # Creamos una instancia del modelo PDF
-                success, message = pdf_model.convert_pdf_to_excel(self.selected_file, destination)
+                success, message = self.controller.convert_xml_to_excel(directory, destination)
                 if success:
-                    QMessageBox.information(self, "Proceso completado", "La conversión se ha completado con éxito.")
+                    QMessageBox.information(self, "Proceso completado", "La conversión de XML se ha completado con éxito.")
                 else:
-                    QMessageBox.critical(self, "Error", f"Error al convertir el archivo: {message}")
-
-    def set_directory(self, directory):
-        self.selected_directory = directory
-        if self.selected_directory:
-            if any(file.lower().endswith(".pdf") for file in os.listdir(self.selected_directory)):
-                destination, _ = QFileDialog.getSaveFileName(self, "Guardar archivo", "", "Archivos Excel (*.xlsx)")
-                if destination:
-                    pdf_model = PDFModel()  # Creamos una instancia del modelo PDF
-                    success, message = pdf_model.convert_pdfs_to_excel(self.selected_directory, destination)
-                    if success:
-                        QMessageBox.information(self, "Proceso completado", "La conversión se ha completado con éxito.")
-                    else:
-                        QMessageBox.critical(self, "Error", f"Error al convertir los archivos: {message}")
-            else:
-                destination, _ = QFileDialog.getSaveFileName(self, "Guardar archivo", "", "Archivos Excel (*.xlsx)")
-                if destination:
-                    xml_model = XMLModel()  # Creamos una instancia del modelo XML
-                    success, message = xml_model.convert_xml_to_excel(self.selected_directory, destination)
-                    if success:
-                        QMessageBox.information(self, "Proceso completado", "La conversión se ha completado con éxito.")
-                    else:
-                        QMessageBox.critical(self, "Error", f"Error al convertir los archivos: {message}")
+                    QMessageBox.critical(self, "Error", f"Error al convertir los archivos XML: {message}")
 
     def set_theme(self):
         if self.dark_mode:
@@ -362,7 +200,16 @@ class MainWindow(QMainWindow):
                 }
                 """
             )
-
+    def set_directory(self, directory):
+        # Este método manejará el directorio seleccionado y comenzará el proceso de conversión
+        if directory:
+            destination, _ = QFileDialog.getSaveFileName(self, "Guardar archivo", "", "Archivos Excel (*.xlsx)")
+            if destination:
+                success, message = self.controller.convert_xml_to_excel(directory, destination)
+                if success:
+                    QMessageBox.information(self, "Proceso completado", "La conversión de XML se ha completado con éxito.")
+                else:
+                    QMessageBox.critical(self, "Error", f"Error al convertir los archivos XML: {message}")
     def toggle_theme(self):
         self.dark_mode = not self.dark_mode
         self.set_theme()

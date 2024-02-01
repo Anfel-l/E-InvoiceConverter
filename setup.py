@@ -1,8 +1,5 @@
 from cx_Freeze import setup, Executable
 
-# Agregar aquí tus dependencias y otros detalles necesarios para el empaquetado
-# por ejemplo, includes, excludes, packages, etc.
-
 base = None
 
 executables = [Executable("main.py", base=base)]
