@@ -165,7 +165,6 @@ class MainWindow(QMainWindow):
 
     def set_theme(self):
         if self.dark_mode:
-            # Tema oscuro
             self.setStyleSheet(
                 """
                 QMainWindow {
@@ -183,7 +182,6 @@ class MainWindow(QMainWindow):
                 """
             )
         else:
-            # Tema claro
             self.setStyleSheet(
                 """
                 QMainWindow {
@@ -200,8 +198,9 @@ class MainWindow(QMainWindow):
                 }
                 """
             )
+
     def set_directory(self, directory):
-        # Este método manejará el directorio seleccionado y comenzará el proceso de conversión
+    
         if directory:
             destination, _ = QFileDialog.getSaveFileName(self, "Guardar archivo", "", "Archivos Excel (*.xlsx)")
             if destination:

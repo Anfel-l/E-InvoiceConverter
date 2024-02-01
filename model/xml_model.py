@@ -1,6 +1,7 @@
 import os
 import re
 import pandas as pd
+from openpyxl import load_workbook
 
 class XMLModel:
     def find_invoice_number(self, xml):
@@ -96,8 +97,29 @@ class XMLModel:
 
         df = pd.DataFrame(results)
         return df
+    
+    def adjust_column_width(self, filename):
+        workbook = load_workbook(filename)
+        worksheet = workbook.active
+
+        for column in worksheet.columns:
+            max_length = 0
+            column = [cell for cell in column if cell.value]
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(cell.value)
+                except:
+                    pass
+            adjusted_width = (max_length + 2)
+            worksheet.column_dimensions[column[0].column_letter].width = adjusted_width
+
+        workbook.save(filename)
 
     def convert_xml_to_excel(self, directory, excel_file):
         df = self.process_xml_files(directory)
         df.to_excel(excel_file, index=False)
+
+        self.adjust_column_width(excel_file)
+
         return True, f"DataFrame guardado en {excel_file}"
