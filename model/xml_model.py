@@ -2,6 +2,7 @@ import os
 import re
 import pandas as pd
 from openpyxl import load_workbook
+from openpyxl.styles import PatternFill, Font, Color
 
 class XMLModel:
     def find_invoice_number(self, xml):
@@ -98,10 +99,30 @@ class XMLModel:
         df = pd.DataFrame(results)
         return df
     
-    def adjust_column_width(self, filename):
+    def format_excel(self, filename):
         workbook = load_workbook(filename)
         worksheet = workbook.active
 
+        # Formato para la primera fila
+        header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+        font_white = Font(color=Color("FFFFFF"))
+
+        for cell in worksheet[1]:
+            cell.fill = header_fill
+            cell.font = font_white
+
+        # Formato para las filas intercaladas
+        light_blue_fill = PatternFill(start_color="DDEBF7", end_color="DDEBF7", fill_type="solid")
+        light_gray_fill = PatternFill(start_color="EDEDED", end_color="EDEDED", fill_type="solid")
+
+        for row in worksheet.iter_rows(min_row=2, max_col=worksheet.max_column, max_row=worksheet.max_row):
+            for cell in row:
+                if row[0].row % 2 == 0:
+                    cell.fill = light_gray_fill
+                else:
+                    cell.fill = light_blue_fill
+
+        # Ajustar el ancho de las columnas
         for column in worksheet.columns:
             max_length = 0
             column = [cell for cell in column if cell.value]
@@ -120,6 +141,7 @@ class XMLModel:
         df = self.process_xml_files(directory)
         df.to_excel(excel_file, index=False)
 
-        self.adjust_column_width(excel_file)
+        # Formatear y ajustar el ancho de las columnas
+        self.format_excel(excel_file)
 
         return True, f"DataFrame guardado en {excel_file}"
