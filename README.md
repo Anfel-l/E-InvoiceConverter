@@ -1,6 +1,6 @@
 # E-Invoice Converter
 
-The E-Invoice Converter App is an application that allows you to convert XML files to Excel format efficiently. This tool is useful for processing and analyzing data contained in XML files and working with it in an Excel spreadsheet.
+The E-Invoice Converter App is an application that allows you to convert XML using the UBL format files to Excel format efficiently. This tool is useful for processing and analyzing data contained in XML files and working with it in an Excel spreadsheet.
 
 ## Features
 
