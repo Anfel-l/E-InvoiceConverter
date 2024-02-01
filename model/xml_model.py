@@ -141,7 +141,6 @@ class XMLModel:
         df = self.process_xml_files(directory)
         df.to_excel(excel_file, index=False)
 
-        # Formatear y ajustar el ancho de las columnas
         self.format_excel(excel_file)
 
         return True, f"DataFrame guardado en {excel_file}"

@@ -9,7 +9,7 @@ if ! command -v cxfreeze &> /dev/null; then
 fi
 
 # Instalar los paquetes requeridos
-pip install pandas PyQt6 os
+pip install pandas PyQt6 os openpyxl
 
 # Crear un archivo de configuración para cx_Freeze
 cat <<EOF > setup.py
