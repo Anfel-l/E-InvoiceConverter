@@ -19,8 +19,4 @@ The E-Invoice Converter App is an application that allows you to convert XML fil
 
 ## Installation
 
-1. Clone or download this repository to your local machine.
-2. Install the required dependencies by running the following command:
 
-   ```bash
-   pip install -r requirements.txt

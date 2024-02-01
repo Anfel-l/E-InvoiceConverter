@@ -1,13 +1,18 @@
-from cx_Freeze import setup, Executable
-
-base = None
-
-executables = [Executable("main.py", base=base)]
+from setuptools import setup, find_packages
 
 setup(
-    name="Business Laboratory Conversion App",
-    version="1.0",
-    description="Descripción de tu aplicación",
-    options={"build_exe": {"packages": ["os"], "excludes": []}},
-    executables=executables
+    name='e-invoice-converter',
+    version='1.0.0',
+    packages=find_packages(),
+    include_package_data=True,
+    install_requires=[
+        'PyQt6',
+        'pandas',
+        'openpyxl',
+        # lista todas tus dependencias aquí
+    ],
+    entry_points='''
+        [console_scripts]
+        e-invoice-converter=main:main
+    ''',
 )

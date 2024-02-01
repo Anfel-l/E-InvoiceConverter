@@ -1,4 +1,0 @@
-pandas
-PyQt6
-openpyxl
-aspose.pdf
