@@ -209,6 +209,7 @@ class MainWindow(QMainWindow):
                     QMessageBox.information(self, "Proceso completado", "La conversión de XML se ha completado con éxito.")
                 else:
                     QMessageBox.critical(self, "Error", f"Error al convertir los archivos XML: {message}")
+                    
     def toggle_theme(self):
         self.dark_mode = not self.dark_mode
         self.set_theme()

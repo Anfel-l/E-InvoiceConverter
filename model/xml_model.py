@@ -103,7 +103,6 @@ class XMLModel:
         workbook = load_workbook(filename)
         worksheet = workbook.active
 
-        # Formato para la primera fila
         header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
         font_white = Font(color=Color("FFFFFF"))
 
@@ -111,7 +110,6 @@ class XMLModel:
             cell.fill = header_fill
             cell.font = font_white
 
-        # Formato para las filas intercaladas
         light_blue_fill = PatternFill(start_color="DDEBF7", end_color="DDEBF7", fill_type="solid")
         light_gray_fill = PatternFill(start_color="EDEDED", end_color="EDEDED", fill_type="solid")
 
@@ -122,7 +120,6 @@ class XMLModel:
                 else:
                     cell.fill = light_blue_fill
 
-        # Ajustar el ancho de las columnas
         for column in worksheet.columns:
             max_length = 0
             column = [cell for cell in column if cell.value]
