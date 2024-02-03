@@ -89,8 +89,8 @@ class XMLModel:
                         "File Name": filename,
                         "Invoice Number": invoice_number,
                         "Invoice Date": invoice_date,
-                        "Client Name": client_name,
-                        "Client NIT": client_nit,
+                        "Company": client_name,
+                        "Company ID (NIT)": client_nit,
                         "IVA": iva,
                         "Total": total,
                         "Status": error_info
