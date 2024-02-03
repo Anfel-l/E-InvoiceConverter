@@ -31,7 +31,7 @@ The E-Invoice Converter App is an application that allows you to convert XML usi
 
    install.bat
 
-### Linux 
+### Linux/Unix
 
 1. Install Python 3.x using your distribution's package manager or download it from the official website.
 
